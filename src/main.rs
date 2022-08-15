@@ -132,13 +132,13 @@ fn xctrl_processor_thread(incoming: vban_xctrl::WorkQueue<String>, outgoing: vba
     });
 }
 
-fn xctrl_state_thread(incoming: vban_xctrl::WorkQueue<StateUpdate>, xctrl_outgoing: vban_xctrl::WorkQueue<String>, vban_outgoing: vban_xctrl::WorkQueue<String>) -> thread::JoinHandle<()> {
+// fn xctrl_state_thread(incoming: vban_xctrl::WorkQueue<StateUpdate>, xctrl_outgoing: vban_xctrl::WorkQueue<String>, vban_outgoing: vban_xctrl::WorkQueue<String>) -> thread::JoinHandle<()> {
 
 
-    return thread::spawn(move || {
+//     return thread::spawn(move || {
 
-    });
-}
+//     });
+// }
 
 fn vban_heartbeat_thread(vban_outgoing: vban_xctrl::WorkQueue<String>) -> thread::JoinHandle<()> {
     return thread::spawn(move || {
@@ -228,7 +228,7 @@ fn main() {
 
     println!("Starting processor threads");
     threads.push(xctrl_processor_thread(xctrl_incoming.clone(), xctrl_outgoing.clone(), state.clone()));
-    threads.push(xctrl_state_thread(state.clone(), xctrl_outgoing.clone(), vban_outgoing.clone()));
+    // threads.push(xctrl_state_thread(state.clone(), xctrl_outgoing.clone(), vban_outgoing.clone()));
     threads.push(vban_processor_thread(vban_incoming.clone(), vban_outgoing.clone(), state.clone(), xctrl_outgoing.clone()));
     threads.push(vban_heartbeat_thread(vban_outgoing.clone()));
 
