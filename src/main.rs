@@ -42,10 +42,17 @@ fn xctrl_incoming_thread(queue: vban_xctrl::WorkQueue<String>, socket: UdpSocket
 }
 
 fn vban_incoming_thread(queue: vban_xctrl::WorkQueue<String>, socket: UdpSocket) -> thread::JoinHandle<()> {
+    let mut i = 0;
     return thread::spawn(move || {
         loop {
+            i += 1;
             let mut buf = [0; 1412];
             let (amt, _src) = socket.recv_from(&mut buf).unwrap();
+
+            if i > 5 {
+                i = 0;
+                continue;
+            }
 
             let buf = &mut buf[..amt];
             let message = hex::encode(buf);
