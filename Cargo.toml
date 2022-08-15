@@ -1,0 +1,9 @@
+[package]
+
+name = "vban_xctrl"
+version = "0.0.1"
+authors = [ "Ollie Nye <ollie@nyemail.co.uk>" ]
+
+[dependencies]
+hex = "0.3.1"
+packed_struct = "0.10"
