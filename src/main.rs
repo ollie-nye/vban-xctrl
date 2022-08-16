@@ -130,21 +130,13 @@ fn xctrl_processor_thread(incoming: vban_xctrl::WorkQueue<String>, outgoing: vba
                     // println!("Received {}", message);
                 }
             } else {
-                thread::sleep(time::Duration::from_millis(50));
+                thread::sleep(time::Duration::from_millis(10));
             }
 
             std::thread::yield_now();
         }
     });
 }
-
-// fn xctrl_state_thread(incoming: vban_xctrl::WorkQueue<StateUpdate>, xctrl_outgoing: vban_xctrl::WorkQueue<String>, vban_outgoing: vban_xctrl::WorkQueue<String>) -> thread::JoinHandle<()> {
-
-
-//     return thread::spawn(move || {
-
-//     });
-// }
 
 fn vban_heartbeat_thread(vban_outgoing: vban_xctrl::WorkQueue<String>) -> thread::JoinHandle<()> {
     return thread::spawn(move || {
@@ -196,7 +188,7 @@ fn vban_processor_thread(vban_incoming: vban_xctrl::WorkQueue<String>, vban_outg
                     println!("Didn't receive VBAN packet :(")
                 }
             } else {
-                thread::sleep(time::Duration::from_millis(50));
+                thread::sleep(time::Duration::from_millis(10));
             }
 
             std::thread::yield_now();
@@ -236,7 +228,6 @@ fn main() {
 
     println!("Starting processor threads");
     threads.push(xctrl_processor_thread(xctrl_incoming.clone(), xctrl_outgoing.clone(), state.clone()));
-    // threads.push(xctrl_state_thread(state.clone(), xctrl_outgoing.clone(), vban_outgoing.clone()));
     threads.push(vban_processor_thread(vban_incoming.clone(), vban_outgoing.clone(), state.clone(), xctrl_outgoing.clone()));
     threads.push(vban_heartbeat_thread(vban_outgoing.clone()));
 
@@ -379,7 +370,7 @@ fn main() {
                 },
             }
 
-            if SystemTime::now().duration_since(last_update_send).expect("Time went backwards").as_millis() > 100 {
+            if SystemTime::now().duration_since(last_update_send).expect("Time went backwards").as_millis() > 50 {
                 let current_surface = &x_touch_state[x_touch_page];
 
                 last_update_send = SystemTime::now();
@@ -419,7 +410,7 @@ fn main() {
                 xctrl_outgoing.add_work(controls_string);
             }
         } else {
-            thread::sleep(time::Duration::from_millis(50));
+            thread::sleep(time::Duration::from_millis(10));
         }
     }
 
