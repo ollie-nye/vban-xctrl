@@ -65,7 +65,7 @@ fn xctrl_outgoing_thread(ip: String, queue: vban_xctrl::WorkQueue<String>, socke
                 socket.send_to(&buf, &ip).unwrap();
                 // println!("Sent {} to x-touch", message);
             } else {
-                // thread::sleep(time::Duration::from_millis(50));
+                thread::sleep(time::Duration::from_millis(10));
             }
 
             std::thread::yield_now();
@@ -81,7 +81,7 @@ fn vban_outgoing_thread(ip: String, queue: vban_xctrl::WorkQueue<String>, socket
                 socket.send_to(&buf, &ip).unwrap();
                 // println!("Sent {} to vban", message);
             } else {
-                // thread::sleep(time::Duration::from_millis(50));
+                thread::sleep(time::Duration::from_millis(10));
             }
 
             std::thread::yield_now();
