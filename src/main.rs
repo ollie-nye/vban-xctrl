@@ -64,6 +64,8 @@ fn xctrl_outgoing_thread(ip: String, queue: vban_xctrl::WorkQueue<String>, socke
                 let buf = hex::decode(&message).unwrap();
                 socket.send_to(&buf, &ip).unwrap();
                 // println!("Sent {} to x-touch", message);
+            } else {
+                thread::sleep(time::Duration::from_millis(50));
             }
 
             std::thread::yield_now();
@@ -78,6 +80,8 @@ fn vban_outgoing_thread(ip: String, queue: vban_xctrl::WorkQueue<String>, socket
                 let buf = hex::decode(&message).unwrap();
                 socket.send_to(&buf, &ip).unwrap();
                 // println!("Sent {} to vban", message);
+            } else {
+                thread::sleep(time::Duration::from_millis(50));
             }
 
             std::thread::yield_now();
@@ -125,6 +129,8 @@ fn xctrl_processor_thread(incoming: vban_xctrl::WorkQueue<String>, outgoing: vba
 
                     // println!("Received {}", message);
                 }
+            } else {
+                thread::sleep(time::Duration::from_millis(50));
             }
 
             std::thread::yield_now();
@@ -370,6 +376,8 @@ fn main() {
                     }
                 },
             }
+        } else {
+            thread::sleep(time::Duration::from_millis(50));
         }
 
         if SystemTime::now().duration_since(last_update_send).expect("Time went backwards").as_millis() > 100 {
