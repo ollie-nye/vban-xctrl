@@ -195,6 +195,8 @@ fn vban_processor_thread(vban_incoming: vban_xctrl::WorkQueue<String>, vban_outg
                 } else {
                     println!("Didn't receive VBAN packet :(")
                 }
+            } else {
+                thread::sleep(time::Duration::from_millis(50));
             }
 
             std::thread::yield_now();
@@ -376,7 +378,7 @@ fn main() {
                     }
                 },
             }
-            
+
             if SystemTime::now().duration_since(last_update_send).expect("Time went backwards").as_millis() > 100 {
                 let current_surface = &x_touch_state[x_touch_page];
 
