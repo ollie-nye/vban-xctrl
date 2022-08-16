@@ -376,48 +376,48 @@ fn main() {
                     }
                 },
             }
+            
+            if SystemTime::now().duration_since(last_update_send).expect("Time went backwards").as_millis() > 100 {
+                let current_surface = &x_touch_state[x_touch_page];
+
+                last_update_send = SystemTime::now();
+
+                display_string = "".to_owned();
+                for display in &current_surface.displays {
+                    display_string.push_str(&display.as_str());
+                }
+                xctrl_outgoing.add_work(display_string);
+
+                controls_string = "".to_owned();
+                for meter in &current_surface.meters {
+                    controls_string.push_str(&meter.as_str());
+                }
+                for rec in &current_surface.recs {
+                    controls_string.push_str(&rec.as_str());
+                }
+                for solo in &current_surface.solos {
+                    controls_string.push_str(&solo.as_str());
+                }
+                for mute in &current_surface.mutes {
+                    controls_string.push_str(&mute.as_str());
+                }
+                for select in &current_surface.selects {
+                    controls_string.push_str(&select.as_str());
+                }
+                for fader in &current_surface.faders {
+                    controls_string.push_str(&fader.as_str());
+                }
+                if x_touch_page == 0 {
+                    controls_string.push_str(&page_1_button_off);
+                    controls_string.push_str(&page_0_button_on);
+                } else if x_touch_page == 1 {
+                    controls_string.push_str(&page_0_button_off);
+                    controls_string.push_str(&page_1_button_on);
+                }
+                xctrl_outgoing.add_work(controls_string);
+            }
         } else {
             thread::sleep(time::Duration::from_millis(50));
-        }
-
-        if SystemTime::now().duration_since(last_update_send).expect("Time went backwards").as_millis() > 100 {
-            let current_surface = &x_touch_state[x_touch_page];
-
-            last_update_send = SystemTime::now();
-
-            display_string = "".to_owned();
-            for display in &current_surface.displays {
-                display_string.push_str(&display.as_str());
-            }
-            xctrl_outgoing.add_work(display_string);
-
-            controls_string = "".to_owned();
-            for meter in &current_surface.meters {
-                controls_string.push_str(&meter.as_str());
-            }
-            for rec in &current_surface.recs {
-                controls_string.push_str(&rec.as_str());
-            }
-            for solo in &current_surface.solos {
-                controls_string.push_str(&solo.as_str());
-            }
-            for mute in &current_surface.mutes {
-                controls_string.push_str(&mute.as_str());
-            }
-            for select in &current_surface.selects {
-                controls_string.push_str(&select.as_str());
-            }
-            for fader in &current_surface.faders {
-                controls_string.push_str(&fader.as_str());
-            }
-            if x_touch_page == 0 {
-                controls_string.push_str(&page_1_button_off);
-                controls_string.push_str(&page_0_button_on);
-            } else if x_touch_page == 1 {
-                controls_string.push_str(&page_0_button_off);
-                controls_string.push_str(&page_1_button_on);
-            }
-            xctrl_outgoing.add_work(controls_string);
         }
     }
 
