@@ -164,7 +164,7 @@ fn vban_heartbeat_thread(vban_outgoing: vban_xctrl::WorkQueue<String>) -> thread
     });
 }
 
-fn vban_processor_thread(vban_incoming: vban_xctrl::WorkQueue<String>, vban_outgoing: vban_xctrl::WorkQueue<String>, state: vban_xctrl::WorkQueue<StateUpdate>, xctrl_outgoing: vban_xctrl::WorkQueue<String>) -> thread::JoinHandle<()> {
+fn vban_processor_thread(vban_incoming: vban_xctrl::WorkQueue<String>, state: vban_xctrl::WorkQueue<StateUpdate>) -> thread::JoinHandle<()> {
     return thread::spawn(move || {
         loop {
             if let Some(message) = vban_incoming.get_work() {
@@ -228,7 +228,7 @@ fn main() {
 
     println!("Starting processor threads");
     threads.push(xctrl_processor_thread(xctrl_incoming.clone(), xctrl_outgoing.clone(), state.clone()));
-    threads.push(vban_processor_thread(vban_incoming.clone(), vban_outgoing.clone(), state.clone(), xctrl_outgoing.clone()));
+    threads.push(vban_processor_thread(vban_incoming.clone(), state.clone()));
     threads.push(vban_heartbeat_thread(vban_outgoing.clone()));
 
 
@@ -239,8 +239,8 @@ fn main() {
     let mut x_touch_state = [XctrlState::new(), XctrlState::new()];
 
     let mut last_update_send = SystemTime::now();
-    let mut display_string: String = "".to_owned();
-    let mut controls_string: String = "".to_owned();
+    let mut display_string: String;
+    let mut controls_string: String;
 
     let page_0_button_on = XctrlButton { button_type: XctrlButtonType::FaderBank, id: 0, state: 127 }.as_str();
     let page_0_button_off = XctrlButton { button_type: XctrlButtonType::FaderBank, id: 0, state: 0 }.as_str();
