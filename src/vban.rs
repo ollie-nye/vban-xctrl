@@ -62,13 +62,13 @@ pub struct RTPacket {
     pub strip_state: [u32; 8],
     pub bus_state: [u32; 8],
     strip_gain_layer_1_raw: [i16; 8],
-    strip_gain_layer_2_raw: [u16; 8],
-    strip_gain_layer_3_raw: [u16; 8],
-    strip_gain_layer_4_raw: [u16; 8],
-    strip_gain_layer_5_raw: [u16; 8],
-    strip_gain_layer_6_raw: [u16; 8],
-    strip_gain_layer_7_raw: [u16; 8],
-    strip_gain_layer_8_raw: [u16; 8],
+    strip_gain_layer_2_raw: [i16; 8],
+    strip_gain_layer_3_raw: [i16; 8],
+    strip_gain_layer_4_raw: [i16; 8],
+    strip_gain_layer_5_raw: [i16; 8],
+    strip_gain_layer_6_raw: [i16; 8],
+    strip_gain_layer_7_raw: [i16; 8],
+    strip_gain_layer_8_raw: [i16; 8],
     bus_gain_raw: [i16; 8],
     strip_labels_raw: [u8; 480],
     bus_labels_raw: [u8; 480],
@@ -85,12 +85,16 @@ impl RTPacket {
         return ((1 << 16) - 1) as u16 - level;
     }
 
+    fn gains(raw_gains: [i16; 8]) -> [f32; 8] {
+      return raw_gains.map(|gain| (gain as f32 * 0.01));
+    }
+
     pub fn input_gains(&self) -> [f32; 8] {
-        return self.strip_gain_layer_1_raw.map(|gain| (gain as f32 * 0.01));
+        return Self::gains(self.strip_gain_layer_1_raw);
     }
 
     pub fn output_gains(&self) -> [f32; 8] {
-      return self.bus_gain_raw.map(|gain| (gain as f32 * 0.01));
+      return Self::gains(self.bus_gain_raw);
   }
 
     pub fn input_levels(&self) -> [[u16; 2]; 8] {
@@ -104,26 +108,6 @@ impl RTPacket {
         for i in 0..3 {
             out[i + 5] = [Self::normalize_level(&virtuals[i * 8]), Self::normalize_level(&virtuals[(i * 8) + 1])];
         }
-        return out;
-    }
-
-    pub fn input_meters(&self) -> [i16; 8] {
-        let raws = self.input_levels();
-        let mut out: [i16; 8] = [0; 8];
-
-        for i in 0..8 {
-            let raw_levels = raws[i];
-            let level_sum = raw_levels[0] as f32 + raw_levels[1] as f32;
-            let level_avg = level_sum / 2.0;
-            let mut level_normalised = level_avg * -0.01;
-            if level_normalised < -200.0 {
-                level_normalised = 0.0;
-            } else if level_normalised < -100.0 {
-                level_normalised = -100.0;
-            }
-            out[i] = (((level_normalised + 100.0) / (15.0 + 100.0)) * 15.0) as i16;
-        }
-
         return out;
     }
 
@@ -141,44 +125,49 @@ impl RTPacket {
         return out;
     }
 
+    fn levels_to_meters(levels: [[u16; 2]; 8]) -> [i16; 8] {
+      let mut out: [i16; 8] = [0; 8];
+
+      for i in 0..8 {
+          let raw_levels = levels[i];
+          let level_sum = raw_levels[0] as f32 + raw_levels[1] as f32;
+          let level_avg = level_sum / 2.0;
+          let mut level_normalised = level_avg * -0.01;
+          if level_normalised < -200.0 {
+              level_normalised = 0.0;
+          } else if level_normalised < -100.0 {
+              level_normalised = -100.0;
+          }
+          out[i] = (((level_normalised + 100.0) / (15.0 + 100.0)) * 15.0) as i16;
+      }
+
+      return out;
+    }
+
+    pub fn input_meters(&self) -> [i16; 8] {
+      return Self::levels_to_meters(self.input_levels());
+    }
+
     pub fn output_meters(&self) -> [i16; 8] {
-        let raws = self.output_levels();
-        let mut out: [i16; 8] = [0; 8];
+      return Self::levels_to_meters(self.output_levels());
+    }
 
-        for i in 0..8 {
-            let raw_levels = raws[i];
-            let level_sum = raw_levels[0] as f32 + raw_levels[1] as f32;
-            let level_avg = level_sum / 2.0;
-            let mut level_normalised = level_avg * -0.01;
-            if level_normalised < -200.0 {
-                level_normalised = 0.0;
-            } else if level_normalised < -100.0 {
-                level_normalised = -100.0;
-            }
-            out[i] = (((level_normalised + 100.0) / (15.0 + 100.0)) * 15.0) as i16;
-        }
-
-        return out;
+    fn format_labels(raw_labels: [u8; 480]) -> [String; 8] {
+      let mut out: [String; 8] = ["", "", "", "", "", "", "", ""].map(|s| s.to_string());
+      for i in 0..8 {
+          let raw_string = &raw_labels[(i * 60)..((i * 60) + 60)];
+          let label = std::str::from_utf8(raw_string).expect("invalid utf-8 sequence").to_string();
+          out[i] = label;
+      }
+      return out;
     }
 
     pub fn strip_labels(&self) -> [String; 8] {
-        let mut out: [String; 8] = ["", "", "", "", "", "", "", ""].map(|s| s.to_string());
-        for i in 0..8 {
-            let raw_string = &self.strip_labels_raw[(i * 60)..((i * 60) + 60)];
-            let label = std::str::from_utf8(raw_string).expect("invalid utf-8 sequence").to_string();
-            out[i] = label;
-        }
-        return out;
+      return Self::format_labels(self.strip_labels_raw);
     }
 
     pub fn bus_labels(&self) -> [String; 8] {
-        let mut out: [String; 8] = ["", "", "", "", "", "", "", ""].map(|s| s.to_string());
-        for i in 0..8 {
-            let raw_string = &self.bus_labels_raw[(i * 60)..((i * 60) + 60)];
-            let label = std::str::from_utf8(raw_string).expect("invalid utf-8 sequence").to_string();
-            out[i] = label;
-        }
-        return out;
+      return Self::format_labels(self.bus_labels_raw);
     }
 }
 
