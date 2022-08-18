@@ -9,10 +9,13 @@ VoiceMeeter Potato: https://vb-audio.com/Voicemeeter/potato.htm
 
 ## Installing
 
+This utility is built using Rust, you may need to install that first:
+https://www.rust-lang.org/tools/install
+
 After pulling the repository, build an executable for your OS with
 `cargo build --release`.
 
-From the `./target/release` directory, run
+Then, from the `./target/release` directory, run
 
 ```
 ./vban_xctrl <machine ip> <xtouch ip> <vban ip>
