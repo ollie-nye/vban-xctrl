@@ -126,8 +126,6 @@ fn xctrl_processor_thread(incoming: vban_xctrl::WorkQueue<String>, outgoing: vba
 
                     let state_update = XctrlStateUpdate { interface_type: command, id: id, value: value, raw_message: raw_message };
                     state.add_work(StateUpdate::Xctrl(state_update));
-
-                    // println!("Received {}", message);
                 }
             } else {
                 thread::sleep(time::Duration::from_millis(10));
@@ -239,13 +237,9 @@ fn main() {
     let mut last_update_send = SystemTime::now();
     let mut display_string: String;
     let mut controls_string: String;
+    let mut buttons_string: String;
 
     let mut faders_updated = false;
-
-    let page_0_button_on = XctrlButton { button_type: XctrlButtonType::FaderBank, id: 0, state: 127 }.as_str();
-    let page_0_button_off = XctrlButton { button_type: XctrlButtonType::FaderBank, id: 0, state: 0 }.as_str();
-    let page_1_button_on = XctrlButton { button_type: XctrlButtonType::FaderBank, id: 1, state: 127 }.as_str();
-    let page_1_button_off = XctrlButton { button_type: XctrlButtonType::FaderBank, id: 1, state: 0 }.as_str();
 
     let mut frame_id: u32 = 0;
 
@@ -326,19 +320,19 @@ fn main() {
                     for i in 0..8 {
                         let flag = flags[i];
                         if (flag & VbanStripFlags::Mute as u32) == VbanStripFlags::Mute as u32 {
-                            x_touch_state[0].mutes[i] = XctrlButton { button_type: XctrlButtonType::Mute, id: i as u8, state: 127 };
+                            x_touch_state[0].buttons[XctrlButtonType::Mute as usize + i] = XctrlButton { id: XctrlButtonType::Mute as u8 + i as u8, state: 127 };
                         } else {
-                            x_touch_state[0].mutes[i] = XctrlButton { button_type: XctrlButtonType::Mute, id: i as u8, state: 0 };
+                            x_touch_state[0].buttons[XctrlButtonType::Mute as usize + i] = XctrlButton { id: XctrlButtonType::Mute as u8 + i as u8, state: 0 };
                         }
                         if (flag & VbanStripFlags::Solo as u32) == VbanStripFlags::Solo as u32 {
-                            x_touch_state[0].solos[i] = XctrlButton { button_type: XctrlButtonType::Solo, id: i as u8, state: 127 };
+                            x_touch_state[0].buttons[XctrlButtonType::Solo as usize + i] = XctrlButton { id: XctrlButtonType::Solo as u8 + i as u8, state: 127 };
                         } else {
-                            x_touch_state[0].solos[i] = XctrlButton { button_type: XctrlButtonType::Solo, id: i as u8, state: 0 };
+                            x_touch_state[0].buttons[XctrlButtonType::Solo as usize + i] = XctrlButton { id: XctrlButtonType::Solo as u8 + i as u8, state: 0 };
                         }
                         if (flag & VbanStripFlags::Mono as u32) == VbanStripFlags::Mono as u32 {
-                            x_touch_state[0].recs[i] = XctrlButton { button_type: XctrlButtonType::Rec, id: i as u8, state: 127 };
+                            x_touch_state[0].buttons[XctrlButtonType::Rec as usize + i] = XctrlButton { id: XctrlButtonType::Rec as u8 + i as u8, state: 127 };
                         } else {
-                            x_touch_state[0].recs[i] = XctrlButton { button_type: XctrlButtonType::Rec, id: i as u8, state: 0 };
+                            x_touch_state[0].buttons[XctrlButtonType::Rec as usize + i] = XctrlButton { id: XctrlButtonType::Rec as u8 + i as u8, state: 0 };
                         }
                     }
 
@@ -346,19 +340,19 @@ fn main() {
                     for i in 0..8 {
                         let flag = flags[i];
                         if (flag & VbanStripFlags::Mute as u32) == VbanStripFlags::Mute as u32 {
-                            x_touch_state[1].mutes[i] = XctrlButton { button_type: XctrlButtonType::Mute, id: i as u8, state: 127 };
+                            x_touch_state[1].buttons[XctrlButtonType::Mute as usize + i] = XctrlButton { id: XctrlButtonType::Mute as u8 + i as u8, state: 127 };
                         } else {
-                            x_touch_state[1].mutes[i] = XctrlButton { button_type: XctrlButtonType::Mute, id: i as u8, state: 0 };
+                            x_touch_state[1].buttons[XctrlButtonType::Mute as usize + i] = XctrlButton { id: XctrlButtonType::Mute as u8 + i as u8, state: 0 };
                         }
                         if (flag & VbanStripFlags::Solo as u32) == VbanStripFlags::Solo as u32 {
-                            x_touch_state[1].solos[i] = XctrlButton { button_type: XctrlButtonType::Solo, id: i as u8, state: 127 };
+                            x_touch_state[1].buttons[XctrlButtonType::Solo as usize + i] = XctrlButton { id: XctrlButtonType::Solo as u8 + i as u8, state: 127 };
                         } else {
-                            x_touch_state[1].solos[i] = XctrlButton { button_type: XctrlButtonType::Solo, id: i as u8, state: 0 };
+                            x_touch_state[1].buttons[XctrlButtonType::Solo as usize + i] = XctrlButton { id: XctrlButtonType::Solo as u8 + i as u8, state: 0 };
                         }
                         if (flag & VbanStripFlags::Mono as u32) == VbanStripFlags::Mono as u32 {
-                            x_touch_state[1].recs[i] = XctrlButton { button_type: XctrlButtonType::Rec, id: i as u8, state: 127 };
+                            x_touch_state[1].buttons[XctrlButtonType::Rec as usize + i] = XctrlButton { id: XctrlButtonType::Rec as u8 + i as u8, state: 127 };
                         } else {
-                            x_touch_state[1].recs[i] = XctrlButton { button_type: XctrlButtonType::Rec, id: i as u8, state: 0 };
+                            x_touch_state[1].buttons[XctrlButtonType::Rec as usize + i] = XctrlButton { id: XctrlButtonType::Rec as u8 + i as u8, state: 0 };
                         }
                     }
 
@@ -373,6 +367,9 @@ fn main() {
                         let meter = XctrlMeter { id: i as u8, level: m[i] as u8 };
                         x_touch_state[1].meters[i] = meter;
                     }
+
+                    x_touch_state[0].buttons[XctrlButtonType::FaderBank as usize + 0] = XctrlButton { id: XctrlButtonType::FaderBank as u8 + 0, state: 127 };
+                    x_touch_state[1].buttons[XctrlButtonType::FaderBank as usize + 1] = XctrlButton { id: XctrlButtonType::FaderBank as u8 + 1, state: 127 };
                 },
             }
 
@@ -391,31 +388,18 @@ fn main() {
                 for meter in &current_surface.meters {
                     controls_string.push_str(&meter.as_str());
                 }
-                for rec in &current_surface.recs {
-                    controls_string.push_str(&rec.as_str());
-                }
-                for solo in &current_surface.solos {
-                    controls_string.push_str(&solo.as_str());
-                }
-                for mute in &current_surface.mutes {
-                    controls_string.push_str(&mute.as_str());
-                }
-                for select in &current_surface.selects {
-                    controls_string.push_str(&select.as_str());
-                }
                 if faders_updated {
                     for fader in &current_surface.faders {
                         controls_string.push_str(&fader.as_str());
                     }
                 }
-                if x_touch_page == 0 {
-                    controls_string.push_str(&page_1_button_off);
-                    controls_string.push_str(&page_0_button_on);
-                } else if x_touch_page == 1 {
-                    controls_string.push_str(&page_0_button_off);
-                    controls_string.push_str(&page_1_button_on);
-                }
                 xctrl_outgoing.add_work(controls_string);
+
+                buttons_string = "".to_owned();
+                for button in &current_surface.buttons {
+                    buttons_string.push_str(&button.as_str());
+                }
+                xctrl_outgoing.add_work(buttons_string);
 
                 faders_updated = false;
             }

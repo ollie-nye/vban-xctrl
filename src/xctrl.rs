@@ -35,24 +35,56 @@ impl XctrlFader {
 
 #[derive(Copy, Clone)]
 pub enum XctrlButtonType {
-  Rec = 0,
-  Solo = 8,
-  Mute = 16,
-  Select = 24,
-  FaderBank = 46,
-  ChannelBank = 48
+  Rec = 0x00, // 8
+  Solo = 0x08, // 8
+  Mute = 0x10, // 8
+  Select = 0x18, // 8
+  Encoder = 0x20, // 8
+  Track = 0x28,
+  Send = 0x29,
+  Pan = 0x2a,
+  PlugIn = 0x2b,
+  Eq = 0x2c,
+  Inst = 0x2d,
+  FaderBank = 0x2e, // 2
+  ChannelBank = 0x30, // 2
+  Flip = 0x32,
+  GlobalView = 0x33,
+  Display = 0x34,
+  Reserved = 0x35,
+  Function = 0x36, // 8
+  MidiTracks = 0x3e,
+  Inputs = 0x3f,
+  AudioTracks = 0x40,
+  AudioInst = 0x41,
+  Aux = 0x42,
+  Buses = 0x43,
+  Outputs = 0x44,
+  User = 0x45,
+  Shift = 0x46,
+  Option = 0x47,
+  Control = 0x48,
+  Alt = 0x49,
+  ReadOff = 0x4a,
+  Write = 0x4b,
+  Trim = 0x4c,
+  Touch = 0x4d,
+  Latch = 0x4e,
+  Group = 0x4f,
+  Save = 0x50,
+  Undo = 0x51,
+  Cancel = 0x52,
+  Enter = 0x53
 }
 
 pub struct XctrlButton {
-  pub button_type: XctrlButtonType,
   pub id: u8,
   pub state: u8
 }
 
 impl XctrlButton {
   pub fn as_bytes(&self) -> [u8; 5] {
-    let button_id: u8 = self.id + self.button_type as u8;
-    return [0xf0, 0x90, button_id, self.state, 0xf7];
+    return [0xf0, 0x90, self.id, self.state, 0xf7];
   }
 
   pub fn as_str(&self) -> String {
@@ -130,10 +162,7 @@ pub struct XctrlState {
     pub displays: [XctrlDisplay; 8],
     pub meters: [XctrlMeter; 8],
     pub faders: [XctrlFader; 9],
-    pub recs: [XctrlButton; 8],
-    pub solos: [XctrlButton; 8],
-    pub mutes: [XctrlButton; 8],
-    pub selects: [XctrlButton; 8]
+    pub buttons: [XctrlButton; 84]
 }
 
 impl XctrlState {
@@ -170,45 +199,91 @@ impl XctrlState {
         XctrlFader { id: 7, level: 0 },
         XctrlFader { id: 8, level: 0 },
       ],
-      recs: [
-        XctrlButton { button_type: XctrlButtonType::Rec, id: 0, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Rec, id: 1, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Rec, id: 2, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Rec, id: 3, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Rec, id: 4, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Rec, id: 5, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Rec, id: 6, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Rec, id: 7, state: 0 },
-      ],
-      solos: [
-        XctrlButton { button_type: XctrlButtonType::Solo, id: 0, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Solo, id: 1, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Solo, id: 2, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Solo, id: 3, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Solo, id: 4, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Solo, id: 5, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Solo, id: 6, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Solo, id: 7, state: 0 },
-      ],
-      mutes: [
-        XctrlButton { button_type: XctrlButtonType::Mute, id: 0, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Mute, id: 1, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Mute, id: 2, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Mute, id: 3, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Mute, id: 4, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Mute, id: 5, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Mute, id: 6, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Mute, id: 7, state: 0 },
-      ],
-      selects: [
-        XctrlButton { button_type: XctrlButtonType::Select, id: 0, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Select, id: 1, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Select, id: 2, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Select, id: 3, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Select, id: 4, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Select, id: 5, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Select, id: 6, state: 0 },
-        XctrlButton { button_type: XctrlButtonType::Select, id: 7, state: 0 },
+      buttons: [
+        XctrlButton { id: XctrlButtonType::Rec as u8 + 0, state: 0 },
+        XctrlButton { id: XctrlButtonType::Rec as u8 + 1, state: 0 },
+        XctrlButton { id: XctrlButtonType::Rec as u8 + 2, state: 0 },
+        XctrlButton { id: XctrlButtonType::Rec as u8 + 3, state: 0 },
+        XctrlButton { id: XctrlButtonType::Rec as u8 + 4, state: 0 },
+        XctrlButton { id: XctrlButtonType::Rec as u8 + 5, state: 0 },
+        XctrlButton { id: XctrlButtonType::Rec as u8 + 6, state: 0 },
+        XctrlButton { id: XctrlButtonType::Rec as u8 + 7, state: 0 },
+        XctrlButton { id: XctrlButtonType::Solo as u8 + 0, state: 0 },
+        XctrlButton { id: XctrlButtonType::Solo as u8 + 1, state: 0 },
+        XctrlButton { id: XctrlButtonType::Solo as u8 + 2, state: 0 },
+        XctrlButton { id: XctrlButtonType::Solo as u8 + 3, state: 0 },
+        XctrlButton { id: XctrlButtonType::Solo as u8 + 4, state: 0 },
+        XctrlButton { id: XctrlButtonType::Solo as u8 + 5, state: 0 },
+        XctrlButton { id: XctrlButtonType::Solo as u8 + 6, state: 0 },
+        XctrlButton { id: XctrlButtonType::Solo as u8 + 7, state: 0 },
+        XctrlButton { id: XctrlButtonType::Mute as u8 + 0, state: 0 },
+        XctrlButton { id: XctrlButtonType::Mute as u8 + 1, state: 0 },
+        XctrlButton { id: XctrlButtonType::Mute as u8 + 2, state: 0 },
+        XctrlButton { id: XctrlButtonType::Mute as u8 + 3, state: 0 },
+        XctrlButton { id: XctrlButtonType::Mute as u8 + 4, state: 0 },
+        XctrlButton { id: XctrlButtonType::Mute as u8 + 5, state: 0 },
+        XctrlButton { id: XctrlButtonType::Mute as u8 + 6, state: 0 },
+        XctrlButton { id: XctrlButtonType::Mute as u8 + 7, state: 0 },
+        XctrlButton { id: XctrlButtonType::Select as u8 + 0, state: 0 },
+        XctrlButton { id: XctrlButtonType::Select as u8 + 1, state: 0 },
+        XctrlButton { id: XctrlButtonType::Select as u8 + 2, state: 0 },
+        XctrlButton { id: XctrlButtonType::Select as u8 + 3, state: 0 },
+        XctrlButton { id: XctrlButtonType::Select as u8 + 4, state: 0 },
+        XctrlButton { id: XctrlButtonType::Select as u8 + 5, state: 0 },
+        XctrlButton { id: XctrlButtonType::Select as u8 + 6, state: 0 },
+        XctrlButton { id: XctrlButtonType::Select as u8 + 7, state: 0 },
+        XctrlButton { id: XctrlButtonType::Encoder as u8 + 0, state: 0 },
+        XctrlButton { id: XctrlButtonType::Encoder as u8 + 1, state: 0 },
+        XctrlButton { id: XctrlButtonType::Encoder as u8 + 2, state: 0 },
+        XctrlButton { id: XctrlButtonType::Encoder as u8 + 3, state: 0 },
+        XctrlButton { id: XctrlButtonType::Encoder as u8 + 4, state: 0 },
+        XctrlButton { id: XctrlButtonType::Encoder as u8 + 5, state: 0 },
+        XctrlButton { id: XctrlButtonType::Encoder as u8 + 6, state: 0 },
+        XctrlButton { id: XctrlButtonType::Encoder as u8 + 7, state: 0 },
+        XctrlButton { id: XctrlButtonType::Track as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Send as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Pan as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::PlugIn as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Eq as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Inst as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::FaderBank as u8 + 0, state: 0 },
+        XctrlButton { id: XctrlButtonType::FaderBank as u8 + 1, state: 0 },
+        XctrlButton { id: XctrlButtonType::ChannelBank as u8 + 0, state: 0 },
+        XctrlButton { id: XctrlButtonType::ChannelBank as u8 + 1, state: 0 },
+        XctrlButton { id: XctrlButtonType::Flip as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::GlobalView as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Display as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Reserved as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Function as u8 + 0, state: 0 },
+        XctrlButton { id: XctrlButtonType::Function as u8 + 1, state: 0 },
+        XctrlButton { id: XctrlButtonType::Function as u8 + 2, state: 0 },
+        XctrlButton { id: XctrlButtonType::Function as u8 + 3, state: 0 },
+        XctrlButton { id: XctrlButtonType::Function as u8 + 4, state: 0 },
+        XctrlButton { id: XctrlButtonType::Function as u8 + 5, state: 0 },
+        XctrlButton { id: XctrlButtonType::Function as u8 + 6, state: 0 },
+        XctrlButton { id: XctrlButtonType::Function as u8 + 7, state: 0 },
+        XctrlButton { id: XctrlButtonType::MidiTracks as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Inputs as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::AudioTracks as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::AudioInst as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Aux as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Buses as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Outputs as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::User as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Shift as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Option as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Control as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Alt as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::ReadOff as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Write as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Trim as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Touch as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Latch as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Group as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Save as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Undo as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Cancel as u8, state: 0 },
+        XctrlButton { id: XctrlButtonType::Enter as u8, state: 0 },
       ]
     };
   }
@@ -221,18 +296,6 @@ pub enum XctrlInterface {
   Button = 0x9,
   Fader = 0xe,
   Unknown = 0x00
-
-
-
-  // Fader = 1,
-  // RecButton = 2,
-  // SoloButton = 3,
-  // MuteButton = 4,
-  // SelectButton = 5,
-  // FaderBankButton = 6,
-  // ChannelBankButton = 7,
-  // FunctionButton = 8,
-  // AutomationButton = 9
 }
 
 impl XctrlInterface {
