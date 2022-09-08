@@ -233,14 +233,14 @@ fn main() {
 
 
 
-
-
     let mut x_touch_page = 0;
     let mut x_touch_state = [XctrlState::new(), XctrlState::new()];
 
     let mut last_update_send = SystemTime::now();
     let mut display_string: String;
     let mut controls_string: String;
+
+    let mut faders_updated = false;
 
     let page_0_button_on = XctrlButton { button_type: XctrlButtonType::FaderBank, id: 0, state: 127 }.as_str();
     let page_0_button_off = XctrlButton { button_type: XctrlButtonType::FaderBank, id: 0, state: 0 }.as_str();
@@ -261,8 +261,10 @@ fn main() {
                             if update.value == 127 {
                                 if update.id == 47 {
                                     x_touch_page = 1;
+                                    faders_updated = true;
                                 } else if update.id == 46 {
                                     x_touch_page = 0;
+                                    faders_updated = true;
                                 }
                             }
                         },
@@ -285,8 +287,7 @@ fn main() {
                         if top == [0, 0, 0, 0, 0, 0, 0] && bottom == [0, 0, 0, 0, 0, 0, 0] {
                             color = XctrlDisplayColor::Off;
                         }
-                        let display = XctrlDisplay::new(i as u8, color, top, bottom);
-                        x_touch_state[0].displays[i] = display;
+                        x_touch_state[0].displays[i] = XctrlDisplay::new(i as u8, color, top, bottom);
                     }
 
                     let labels = update.bus_labels();
@@ -298,14 +299,16 @@ fn main() {
                         if top == [0, 0, 0, 0, 0, 0, 0] && bottom == [0, 0, 0, 0, 0, 0, 0] {
                             color = XctrlDisplayColor::Off;
                         }
-                        let display = XctrlDisplay::new(i as u8, color, top, bottom);
-                        x_touch_state[1].displays[i] = display;
+                        x_touch_state[1].displays[i] = XctrlDisplay::new(i as u8, color, top, bottom);
                     }
 
                     let gains = update.input_gains();
                     for i in 0..8 {
                         let scaled_gain = (((gains[i] + 60.0) / (12.0 + 60.0)) * 32767.0) as u16;
                         let fader = XctrlFader { id: i as u8, level: scaled_gain };
+                        if x_touch_state[0].faders[i].level != scaled_gain {
+                            faders_updated = true;
+                        }
                         x_touch_state[0].faders[i] = fader;
                     }
 
@@ -313,6 +316,9 @@ fn main() {
                     for i in 0..8 {
                         let scaled_gain = (((gains[i] + 60.0) / (12.0 + 60.0)) * 32767.0) as u16;
                         let fader = XctrlFader { id: i as u8, level: scaled_gain };
+                        if x_touch_state[1].faders[i].level != scaled_gain {
+                            faders_updated = true;
+                        }
                         x_touch_state[1].faders[i] = fader;
                     }
 
@@ -397,8 +403,10 @@ fn main() {
                 for select in &current_surface.selects {
                     controls_string.push_str(&select.as_str());
                 }
-                for fader in &current_surface.faders {
-                    controls_string.push_str(&fader.as_str());
+                if faders_updated {
+                    for fader in &current_surface.faders {
+                        controls_string.push_str(&fader.as_str());
+                    }
                 }
                 if x_touch_page == 0 {
                     controls_string.push_str(&page_1_button_off);
@@ -408,6 +416,8 @@ fn main() {
                     controls_string.push_str(&page_1_button_on);
                 }
                 xctrl_outgoing.add_work(controls_string);
+
+                faders_updated = false;
             }
         } else {
             thread::sleep(time::Duration::from_millis(10));
