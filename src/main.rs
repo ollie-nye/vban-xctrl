@@ -176,7 +176,7 @@ fn vban_processor_thread(vban_incoming: vban_xctrl::WorkQueue<String>, state: vb
                         let service_buf: [u8; 28] = hex::decode(&message).expect("could not decode hex")[0..28].try_into().unwrap();
                         let service_header = VBANServiceHeader::unpack(&service_buf).expect("packet isn't a service header");
                         if service_header.service == 32 && service_header.additional_info == 1 {
-                            println!("RT successfully registered");
+                            println!("VoiceMeeter registered");
                         } else if service_header.stream_name == "Voicemeeter-RTP\0".as_bytes() {
                             let buf: [u8; 1412] = hex::decode(&message).expect("could not decode hex").try_into().unwrap();
                             let rt_packet = RTPacket::unpack(&buf).expect("packet isn't a rt service");
