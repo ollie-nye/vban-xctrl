@@ -16,7 +16,8 @@ pub use vban_xctrl::*;
 #[derive(Clone, Copy)]
 pub enum StateUpdate {
     Vban(RTPacket),
-    Xctrl(XctrlStateUpdate)
+    Xctrl(XctrlStateUpdate),
+    XtouchConnect()
 }
 
 pub enum VbanStripFlags {
@@ -96,6 +97,8 @@ fn xctrl_processor_thread(incoming: vban_xctrl::WorkQueue<String>, outgoing: vba
                 if message == "f0002032585400f7" {
                     let response = hex::encode([0xf0, 0x00, 0x00, 0x66, 0x14, 0x00, 0xf7]);
                     outgoing.add_work(response.clone());
+
+                    state.add_work(StateUpdate::XtouchConnect());
                 } else if message == "f000006658013031353634303833393344f7" {
                     continue;
                 } else {
@@ -240,12 +243,21 @@ fn main() {
     let mut buttons_string: String;
 
     let mut faders_updated = false;
+    let mut connection_time = SystemTime::now();
 
     let mut frame_id: u32 = 0;
 
     loop {
         if let Some(message) = state.get_work() {
             match message {
+                StateUpdate::XtouchConnect() => {
+                    let last_connection_diff = SystemTime::now().duration_since(connection_time).expect("SystemTime::duration_since failed");
+                    if last_connection_diff.as_secs() > 5 {
+                        faders_updated = true;
+                        println!("New connection made, updating faders...");
+                    }
+                    connection_time = SystemTime::now();
+                },
                 StateUpdate::Xctrl(update) => {
                     match update.interface_type {
                         XctrlInterface::Button => {
