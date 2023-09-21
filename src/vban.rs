@@ -94,8 +94,8 @@ impl RTPacket {
     }
 
     pub fn output_gains(&self) -> [f32; 8] {
-      return Self::gains(self.bus_gain_raw);
-  }
+        return Self::gains(self.bus_gain_raw);
+    }
 
     pub fn input_levels(&self) -> [[u16; 2]; 8] {
         let physicals = &self.input_levels_raw[0..10];
@@ -138,7 +138,7 @@ impl RTPacket {
           } else if level_normalised < -100.0 {
               level_normalised = -100.0;
           }
-          out[i] = (((level_normalised + 100.0) / (15.0 + 100.0)) * 15.0) as i16;
+          out[i] = (((level_normalised + 100.0) / 100.0) * 16.0) as i16;
       }
 
       return out;
