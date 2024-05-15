@@ -30,12 +30,16 @@ fn xctrl_incoming_thread(queue: vban_xctrl::WorkQueue<String>, socket: UdpSocket
     return thread::spawn(move || {
         loop {
             let mut buf = [0; 32];
-            let (amt, _src) = socket.recv_from(&mut buf).unwrap();
-
-            let buf = &mut buf[..amt];
-            let message = hex::encode(buf);
-
-            queue.add_work(message.clone());
+            match socket.recv_from(&mut buf) {
+                Ok((amt, _src)) => {
+                    let buf = &mut buf[..amt];
+                    let message = hex::encode(buf);
+                    queue.add_work(message.clone());
+                },
+                Err(e) => {
+                    eprintln!("Error receiving XCtrl data: {:?}", e);
+                }
+            }
 
             std::thread::yield_now();
         }
@@ -46,12 +50,16 @@ fn vban_incoming_thread(queue: vban_xctrl::WorkQueue<String>, socket: UdpSocket)
     return thread::spawn(move || {
         loop {
             let mut buf = [0; 1412];
-            let (amt, _src) = socket.recv_from(&mut buf).unwrap();
-
-            let buf = &mut buf[..amt];
-            let message = hex::encode(buf);
-
-            queue.add_work(message.clone());
+            match socket.recv_from(&mut buf) {
+                Ok((amt, _src)) => {
+                    let buf = &mut buf[..amt];
+                    let message = hex::encode(buf);
+                    queue.add_work(message.clone());
+                },
+                Err(e) => {
+                    eprintln!("Error receiving VBAN data: {:?}", e);
+                }
+            }
 
             std::thread::yield_now();
         }
@@ -63,7 +71,9 @@ fn xctrl_outgoing_thread(ip: String, queue: vban_xctrl::WorkQueue<String>, socke
         loop {
             if let Some(message) = queue.get_work() {
                 let buf = hex::decode(&message).unwrap();
-                socket.send_to(&buf, &ip).unwrap();
+                if let Err(e) = socket.send_to(&buf, &ip) {
+                    eprintln!("Error sending XCtrl data: {:?}", e);
+                }
                 // println!("Sent {} to x-touch", message);
             } else {
                 thread::sleep(time::Duration::from_millis(10));
@@ -79,7 +89,9 @@ fn vban_outgoing_thread(ip: String, queue: vban_xctrl::WorkQueue<String>, socket
         loop {
             if let Some(message) = queue.get_work() {
                 let buf = hex::decode(&message).unwrap();
-                socket.send_to(&buf, &ip).unwrap();
+                if let Err(e) = socket.send_to(&buf, &ip) {
+                    eprintln!("Error sending VBAN data: {:?}", e);
+                }
                 // println!("Sent {} to vban", message);
             } else {
                 thread::sleep(time::Duration::from_millis(10));
@@ -231,8 +243,6 @@ fn main() {
     threads.push(xctrl_processor_thread(xctrl_incoming.clone(), xctrl_outgoing.clone(), state.clone()));
     threads.push(vban_processor_thread(vban_incoming.clone(), state.clone()));
     threads.push(vban_heartbeat_thread(vban_outgoing.clone()));
-
-
 
     let mut x_touch_page = 0;
     let mut x_touch_state = [XctrlState::new(), XctrlState::new()];
